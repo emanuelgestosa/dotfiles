@@ -8,6 +8,8 @@ used pieces of software.
     * bash (shell)
     * lf (file manager)
     * mpv (video player)
+    * dunst (notification daemon)
+    * others
 * Custom builds for [suckless](suckless.org) programs:
     * dwm (window manager)
     * st (terminal)
