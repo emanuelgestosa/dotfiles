@@ -20,9 +20,11 @@ set modelines=0
 " Automatically wrap text that extends beyond the screen length.
 set wrap
 
-" Uncomment below to set the max textwidth. Use a value corresponding to the width of your screen.
+" Set the maximum text width to 79 characters
 set textwidth=79
 set formatoptions=tcqrn1
+
+" Use 4 spaces instead of TAB character
 set tabstop=4
 set shiftwidth=4
 set softtabstop=4
@@ -72,6 +74,8 @@ set smartcase
 " Store info from no more than 100 files at a time, 9999 lines of text, 100kb of data. Useful for copying large amounts of data between files.
 set viminfo='100,<9999,s100
 
+" Shared clipboard
+set clipboard=unnamedplus
 
 " ---------------PLUGINS--------------------
 "
@@ -120,7 +124,11 @@ let g:airline_powerline_fonts = 1
 let g:coc_global_extensions = [ 'coc-tsserver' ]
 " Exit Vim if NERDTree is the only window remaining in the only tab.
 autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
+
+" Color scheme
 colorscheme dracula
+
+" Font
 set guifont=DroidSansMono\ Nerd\ Font\ 12
 
 " vim-markdown
@@ -148,9 +156,6 @@ nnoremap K :m .-2<CR>==
 nnoremap J :m .+1<CR>==
 vnoremap K :m '<-2<CR>gv=gv
 
-"Misc
-:imap ii <Esc>
-
 " Map the <Space> key to toggle a selected fold opened/closed.
 nnoremap <silent> <Space> @=(foldlevel('.')?'za':"\<Space>")<CR>
 vnoremap <Space> zf
@@ -171,49 +176,69 @@ noremap <leader>n :NERDTreeToggle<cr>
 noremap <leader>r :NERDTreeRefreshRoot<cr>
 let NERDTreeShowHidden=1
 
-" Build and run shortcuts
-" Open vim-dispatch window and scroll to bottom
-nnoremap    <C-m>m    :Copen<CR> <bar> G
-
-" Build debug and release targets
-nnoremap    <C-m>bd   :Dispatch! make -C build/debug<CR>
-nnoremap    <C-m>br   :Dispatch! make -C build/release<CR>
-
-" Map <F6> to the Debug executable with passed filename
-function SetBinaryDebug(filename)
-    let bpath = getcwd() . "/bin/debug/" . a:filename
-    execute "nnoremap <F6> :Dispatch "
-            \ bpath
-            \ . " <CR> <bar> :Copen<CR>"
-    echo "<F6> will run: " . bpath
-endfunction
-
-" Map <F7> to the Release executable with passed filename
-function SetBinaryRelease(filename)
-    let bpath = getcwd() . "/bin/release/" . a:filename 
-    execute "nnoremap <F7> :Dispatch "
-                \ bpath 
-                \ . "<CR> <bar> :Copen<CR>"
-    echo "<F7> will run: " . bpath
-endfunction
-
-
-
 " Vim's auto indentation feature does not work properly with text copied from outside of Vim. Press the <F2> key to toggle paste mode on/off.
 noremap <F2> :set invpaste paste?<CR>
 imap <F2> <C-O>:set invpaste paste?<CR>
 set pastetoggle=<F2>
+    
+" Some servers have issues with backup files, see #649.
+set nobackup
+set nowritebackup
+
+" Having longer updatetime (default is 4000 ms = 4 s) leads to noticeable
+" delays and poor user experience.
+set updatetime=300
+
+" Always show the signcolumn, otherwise it would shift the text each time
+" diagnostics appear/become resolved.
+set signcolumn=yes
 
 " Use tab for trigger completion with characters ahead and navigate.
+" NOTE: There's always complete item selected by default, you may want to enable
+" no select by `"suggest.noselect": true` in your configuration file.
 " NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
 " other plugin before putting this into your config.
 inoremap <silent><expr> <TAB>
-      \ pumvisible() ? "\<C-n>" :
-      \ <SID>check_back_space() ? "\<TAB>" :
+      \ coc#pum#visible() ? coc#pum#next(1) :
+      \ CheckBackspace() ? "\<Tab>" :
       \ coc#refresh()
-inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
 
-function! s:check_back_space() abort
+" Make <CR> to accept selected completion item or notify coc.nvim to format
+" <C-g>u breaks current undo, please make your own choice.
+inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm()
+                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+
+function! CheckBackspace() abort
   let col = col('.') - 1
   return !col || getline('.')[col - 1]  =~# '\s'
 endfunction
+
+" Use K to show documentation in preview window.
+nnoremap <silent> K :call ShowDocumentation()<CR>
+
+function! ShowDocumentation()
+  if CocAction('hasProvider', 'hover')
+    call CocActionAsync('doHover')
+  else
+    call feedkeys('K', 'in')
+  endif
+endfunction
+
+" Highlight the symbol and its references when holding the cursor.
+autocmd CursorHold * silent call CocActionAsync('highlight')
+
+" Symbol renaming.
+nmap <leader>rn <Plug>(coc-rename)
+
+" Formatting selected code.
+xmap <leader>f  <Plug>(coc-format-selected)
+nmap <leader>f  <Plug>(coc-format-selected)
+
+augroup mygroup
+  autocmd!
+  " Setup formatexpr specified filetype(s).
+  autocmd FileType typescript,json setl formatexpr=CocAction('formatSelected')
+  " Update signature help on jump placeholder.
+  autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
+augroup end
