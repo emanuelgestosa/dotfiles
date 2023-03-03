@@ -42,4 +42,4 @@ bind '"\C-o":"\C-ulf\C-m"'
 bind '"\C-l":"\C-uclear\C-m"'
 
 # More PATHS
-export PATH=$PATH:$HOME/scripts/
+export PATH=$PATH:$HOME/.scripts/
